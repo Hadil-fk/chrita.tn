@@ -16,6 +16,7 @@ const MQTT_BROKER_URL = "wss://885e401cb7ed4660a1ea6ccd35904e81.s1.eu.hivemq.clo
 const MQTT_USERNAME = "esp32";
 const MQTT_PASSWORD = "Chrita1234";
 const MQTT_TOPIC = "lingeconnect/live";
+const ENV_STORAGE_KEY = "laundry_environment";
 
 // Generate unique client ID for browser
 const getClientId = () => {
@@ -181,6 +182,29 @@ const Dashboard = () => {
                 ),
                 createdAt: new Date().toISOString(),
               };
+
+              // Calculate sun exposure based on local time (simple heuristic)
+              const hour = new Date().getHours();
+              const sunExposure = hour >= 6 && hour <= 18
+                ? Math.max(0, 100 - Math.abs(hour - 12) * 8)
+                : 0;
+
+              // Publish environmental conditions to localStorage for Laundry page
+              const env = {
+                temperature: mqttData.temperature,
+                humidity: mqttData.humidity,
+                rain: mqttData.isRaining,
+                sunExposure,
+                lastUpdated: new Date().toISOString(),
+              };
+
+              try {
+                localStorage.setItem(ENV_STORAGE_KEY, JSON.stringify(env));
+                // Dispatch a window event so same-tab components receive updates
+                window.dispatchEvent(new CustomEvent("environmental:update", { detail: env }));
+              } catch (err) {
+                console.error("Failed to publish environmental conditions:", err);
+              }
 
               setSensorData(sensorData);
               generateAlerts(sensorData);
