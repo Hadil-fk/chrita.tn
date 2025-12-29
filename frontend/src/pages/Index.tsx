@@ -1,11 +1,12 @@
 import { Link } from "react-router-dom";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Layout from "@/components/Layout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Thermometer, Droplets, CloudRain, Wifi, Shield, Zap, Bell, Mail, Phone } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import logo from "@/assets/logo.png";
+import emailjs from "@emailjs/browser";
 
 const Index = () => {
   const { isAuthenticated } = useAuth();
@@ -13,18 +14,57 @@ const Index = () => {
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  // Initialize EmailJS on component mount
+  useEffect(() => {
+    emailjs.init("u8p2_hpboSFT0Ovr4");
+  }, []);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
+    setError(null); // Clear error when user starts typing
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (formData.name && formData.email && formData.message) {
+    
+    // Validate form data
+    if (!formData.name || !formData.email || !formData.message) {
+      setError("Please fill in all fields");
+      return;
+    }
+
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      // Send email using EmailJS
+      await emailjs.send(
+        "service_urq8bf9", // Service ID
+        "template_pfwvnof", // Template ID
+        {
+          from_name: formData.name,
+          from_email: formData.email,
+          message: formData.message,
+        }
+      );
+
+      // Success: Show message and reset form
       setIsSubmitted(true);
       setFormData({ name: "", email: "", message: "" });
-      setTimeout(() => setIsSubmitted(false), 3000);
+      
+      // Hide success message after 5 seconds
+      setTimeout(() => setIsSubmitted(false), 5000);
+    } catch (err) {
+      // Handle error
+      const errorMessage = err instanceof Error ? err.message : "Failed to send message. Please try again.";
+      setError(errorMessage);
+      console.error("EmailJS error:", err);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -249,14 +289,20 @@ const Index = () => {
                       ✓ Message sent successfully! We'll be in touch soon.
                     </p>
                   )}
+                  {error && (
+                    <p className="text-destructive text-sm font-medium">
+                      ✕ {error}
+                    </p>
+                  )}
                 </div>
                 <Button
                   type="submit"
                   variant="gradient"
                   size="lg"
                   className="pointer-events-auto cursor-pointer"
+                  disabled={isLoading}
                 >
-                  Send
+                  {isLoading ? "Sending..." : "Send"}
                 </Button>
               </div>
             </form>
