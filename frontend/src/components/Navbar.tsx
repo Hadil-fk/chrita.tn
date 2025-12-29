@@ -96,7 +96,10 @@ const Navbar = () => {
                     <div className="absolute right-0 mt-2 w-64 bg-card/95 backdrop-blur-xl border border-border/50 rounded-lg overflow-hidden shadow-lg z-50 animate-slide-up">
                       {/* User Info Header */}
                       <div className="px-4 py-3 border-b border-border/30">
-                        <p className="text-sm font-semibold text-foreground">{user?.name || 'User'}</p>
+                        <p className="text-sm font-semibold text-foreground">
+                          {user?.firstName && user?.lastName
+                            ? `${user.firstName} ${user.lastName}`: 'User'}
+                        </p>
                         <p className="text-xs text-muted-foreground mt-1">{user?.email}</p>
                       </div>
 
@@ -183,7 +186,11 @@ const Navbar = () => {
                 {isAuthenticated ? (
                   <div className="w-full">
                     <div className="px-4 py-2 mb-2 border-b border-border/30">
-                      <p className="text-sm font-semibold text-foreground">{user?.name || 'User'}</p>
+                      <p className="text-sm font-semibold text-foreground">
+                        {user?.firstName && user?.lastName 
+                          ? `${user.firstName} ${user.lastName}` 
+                          : "User"}
+                      </p>
                       <p className="text-xs text-muted-foreground mt-1">{user?.email}</p>
                     </div>
                     <Link

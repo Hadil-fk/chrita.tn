@@ -13,6 +13,8 @@ export interface User {
   firstName: string;
   lastName: string;
   email: string;
+  // Legacy field for backward compatibility
+  name?: string;
 }
 
 /**

@@ -355,7 +355,7 @@ const Dashboard = () => {
             type="button"
           >
             <RefreshCw className={`w-4 h-4 ${isLoading ? "animate-spin" : ""}`} />
-            {isLoading ? "Connecting..." : isConnected ? "MQTT Connected" : "MQTT Disconnected"}
+            {isLoading ? "Connecting..." : isConnected ? "Refreshing Data" : "MQTT Disconnected"}
           </Button>
         </div>
 

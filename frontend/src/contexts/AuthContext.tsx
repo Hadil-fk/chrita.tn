@@ -10,6 +10,7 @@ interface AuthContextType {
   signup: (firstName: string, lastName: string, email: string, password: string) => Promise<void>;
   loginWithGoogle: (tokenId: string) => Promise<void>;
   logout: () => void;
+  setUser: (user: User | null) => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -59,12 +60,16 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
    */
   const login = async (email: string, password: string) => {
     setIsLoading(true);
-    // Call the authentication service
-    const response = await loginService({ email, password });
-    
-    // Update user state with response data
-    setUser(response.user);
-    setIsLoading(false);
+    try {
+      // Call the authentication service
+      await loginService({ email, password });
+      
+      // Read normalized user from localStorage (set by loginService)
+      const savedUser = getCurrentUser();
+      setUser(savedUser);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   /**
@@ -88,8 +93,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const loginWithGoogle = async (tokenId: string) => {
     setIsLoading(true);
     try {
-      const response = await loginWithGoogleService(tokenId);
-      setUser(response.user);
+      await loginWithGoogleService(tokenId);
+      // Read normalized user from localStorage (set by loginWithGoogleService)
+      const savedUser = getCurrentUser();
+      setUser(savedUser);
     } finally {
       setIsLoading(false);
     }
@@ -104,6 +111,17 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setUser(null);
   };
 
+  /**
+   * Update user state
+   * Used after profile updates or to sync user data
+   */
+  const updateUserState = (updatedUser: User | null) => {
+    setUser(updatedUser);
+    if (updatedUser) {
+      localStorage.setItem("auth-user", JSON.stringify(updatedUser));
+    }
+  };
+
   return (
     <AuthContext.Provider
       value={{
@@ -114,6 +132,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         signup,
         loginWithGoogle,
         logout,
+        setUser: updateUserState,
       }}
     >
       {children}

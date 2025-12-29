@@ -112,6 +112,60 @@ router.post("/signin", async (req, res) => {
   }
 });
 
+// -------- UPDATE USER PROFILE --------
+router.put("/profile/:userId", async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const { firstName, lastName, email } = req.body;
+
+    // Validate userId
+    if (!userId) {
+      return res.status(400).json({ message: "User ID is required" });
+    }
+
+    // Build update object with only provided fields
+    const updateData = {};
+    if (firstName !== undefined) updateData.firstName = firstName.trim();
+    if (lastName !== undefined) updateData.lastName = lastName.trim();
+    if (email !== undefined) updateData.email = email.toLowerCase().trim();
+
+    // If no fields to update
+    if (Object.keys(updateData).length === 0) {
+      return res.status(400).json({ message: "No fields to update" });
+    }
+
+    // Update user
+    const user = await User.findByIdAndUpdate(
+      userId,
+      updateData,
+      { new: true, runValidators: true }
+    );
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    res.json({
+      message: "Profile updated successfully",
+      user: {
+        id: user._id,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        email: user.email,
+      },
+    });
+  } catch (error) {
+    console.error("Update profile error:", error);
+    
+    // Handle duplicate email error
+    if (error.code === 11000) {
+      return res.status(400).json({ message: "Email is already in use" });
+    }
+    
+    res.status(500).json({ message: error.message || "Internal server error" });
+  }
+});
+
 // -------- GOOGLE OAUTH --------
 router.post("/google", async (req, res) => {
   try {
