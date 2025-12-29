@@ -166,6 +166,42 @@ router.put("/profile/:userId", async (req, res) => {
   }
 });
 
+// -------- CHANGE PASSWORD --------
+router.put("/change-password/:userId", async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const { currentPassword, newPassword } = req.body;
+
+    if (!userId) return res.status(400).json({ message: "User ID is required" });
+    if (!currentPassword || !newPassword) return res.status(400).json({ message: "Both current and new passwords are required" });
+
+    const user = await User.findById(userId);
+    if (!user) return res.status(404).json({ message: "User not found" });
+
+    // If user has no local password (Google-only), reject
+    if (!user.password) {
+      return res.status(400).json({ message: "This account uses Google sign-in. Password change is not available." });
+    }
+
+    // Verify current password
+    const isMatch = await bcrypt.compare(currentPassword, user.password);
+    if (!isMatch) return res.status(400).json({ message: "Current password is incorrect" });
+
+    // Validate new password strength/length
+    if (newPassword.length < 8) return res.status(400).json({ message: "New password must be at least 8 characters" });
+
+    // Hash and save new password
+    const hashed = await bcrypt.hash(newPassword, 10);
+    user.password = hashed;
+    await user.save();
+
+    return res.json({ message: "Password updated successfully" });
+  } catch (error) {
+    console.error("Change password error:", error);
+    res.status(500).json({ message: error.message || "Failed to change password" });
+  }
+});
+
 // -------- GOOGLE OAUTH --------
 router.post("/google", async (req, res) => {
   try {

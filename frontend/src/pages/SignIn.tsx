@@ -28,7 +28,7 @@ const SignIn = () => {
         title: "Welcome!",
         description: "You have successfully signed in with Google.",
       });
-      navigate("/dashboard");
+      navigate("/");
     } catch (error) {
       toast({
         title: "Google Sign In Failed",
@@ -68,7 +68,7 @@ const SignIn = () => {
         title: "Welcome Back!",
         description: "You have successfully signed in.",
       });
-      navigate("/dashboard");
+      navigate("/");
     } catch (error) {
       toast({
         title: "Sign In Failed",

@@ -24,13 +24,24 @@ const getErrorMessage = (error: unknown, defaultMessage: string): string => {
 };
 
 // Helper: normalize raw user object to ensure firstName/lastName exist
-const normalizeUser = (raw: any): any => {
-  if (!raw) return null;
+const normalizeUser = (raw: unknown): User | null => {
+  if (!raw || typeof raw !== "object") return null;
+
+  const obj = raw as Record<string, unknown>;
+
+  const id = 
+    (obj.id as string | undefined) ?? 
+    (typeof obj._id === "object" && obj._id != null && "toString" in obj._id 
+      ? (obj._id as { toString: () => string }).toString() 
+      : undefined) ??
+    (typeof obj._id === "string" ? obj._id as string : undefined) ??
+    "";
+
   return {
-    id: raw.id ?? raw._id?.toString?.() ?? raw._id ?? "",
-    firstName: raw.firstName ?? raw.first_name ?? "",
-    lastName: raw.lastName ?? raw.last_name ?? "",
-    email: raw.email ?? "",
+    id,
+    firstName: (obj.firstName as string | undefined) ?? (obj.first_name as string | undefined) ?? "",
+    lastName: (obj.lastName as string | undefined) ?? (obj.last_name as string | undefined) ?? "",
+    email: (obj.email as string | undefined) ?? "",
   };
 };
 
@@ -111,6 +122,15 @@ export const updateUser = async (userId: string, data: Partial<User>): Promise<U
     return normalized;
   } catch (error) {
     throw new Error(getErrorMessage(error, "Failed to update profile"));
+  }
+};
+
+// CHANGE PASSWORD
+export const changePassword = async (userId: string, currentPassword: string, newPassword: string): Promise<void> => {
+  try {
+    await api.put(`/auth/change-password/${userId}`, { currentPassword, newPassword });
+  } catch (error) {
+    throw new Error(getErrorMessage(error, "Failed to change password"));
   }
 };
 

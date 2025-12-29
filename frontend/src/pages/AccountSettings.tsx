@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useAuth } from "@/contexts/AuthContext";
-import { updateUser } from "@/services/auth.service";
+import { updateUser, changePassword } from "@/services/auth.service";
 import { ArrowLeft, User, Mail, Shield, Trash2, LogOut, Eye, EyeOff, KeyRound } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 
@@ -93,12 +93,20 @@ const handleUpdateUserInfo = async (e: React.FormEvent) => {
       title: "Success",
       description: "Profile updated successfully!",
     });
-  } catch (error: any ) {
-    toast({
-      title: "Update Failed",
-      description: error.message || "Something went wrong.",
-      variant: "destructive",
-    });
+  } catch (error: unknown) {
+  let message = "Something went wrong.";
+  
+  if (error instanceof Error) {
+    message = error.message;
+  } else if (typeof error === "object" && error !== null && "message" in error) {
+    message = String((error as { message?: unknown }).message);
+  }
+
+  toast({
+    title: "Update Failed",
+    description: message,
+    variant: "destructive",
+  });
   } finally {
     setIsLoading(false);
   }
@@ -143,8 +151,7 @@ const handleUpdateUserInfo = async (e: React.FormEvent) => {
 
     setIsLoading(true);
     try {
-      // TODO: Replace with real API call when backend is ready
-      await new Promise((resolve) => setTimeout(resolve, 800));
+      await changePassword(user.id, passwordData.currentPassword, passwordData.newPassword);
 
       toast({
         title: "Password Changed",
@@ -153,13 +160,21 @@ const handleUpdateUserInfo = async (e: React.FormEvent) => {
 
       setPasswordData({ currentPassword: "", newPassword: "", confirmPassword: "" });
       setPasswordError("");
-    } catch {
-      toast({
-        title: "Failed",
-        description: "Could not change password.",
-        variant: "destructive",
-      });
-    } finally {
+    } catch (error: unknown) {
+  let message = "Could not change password.";
+  
+  if (error instanceof Error) {
+    message = error.message;
+  } else if (typeof error === "object" && error !== null && "message" in error) {
+    message = String((error as { message?: unknown }).message);
+  }
+
+  toast({
+    title: "Failed",
+    description: message,
+    variant: "destructive",
+  });
+  }  finally {
       setIsLoading(false);
     }
   };

@@ -33,7 +33,7 @@ const SignUp = () => {
         title: "Account Created!",
         description: "Welcome to Chrita.tn! You are now signed in with Google.",
       });
-      navigate("/dashboard");
+      navigate("/");
     } catch (error) {
       toast({
         title: "Google Sign Up Failed",
@@ -118,7 +118,7 @@ const SignUp = () => {
         title: "Account Created!",
         description: "Welcome to Chrita.tn! You are now signed in.",
       });
-      navigate("/dashboard");
+      navigate("/");
     } catch (error) {
       toast({
         title: "Sign Up Failed",
