@@ -11,7 +11,7 @@ import axios, { AxiosInstance, InternalAxiosRequestConfig, AxiosError } from "ax
 
 // Base URL for the backend API
 // Must match the backend server port (default: 8080)
-const BASE_URL = "http://localhost:8080/api";
+const BASE_URL = "https://chrita-tn.onrender.com/";
 
 /**
  * Create axios instance with base configuration
