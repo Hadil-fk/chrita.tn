@@ -27,6 +27,7 @@ app.use(cors({
       "http://localhost:3000",
       "http://localhost:5173",
       "http://localhost:5174",
+      "https://chrita-tn.onrender.com",
       "http://localhost:8080"
     ];
     
