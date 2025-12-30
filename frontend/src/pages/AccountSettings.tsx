@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useAuth } from "@/contexts/AuthContext";
-import { updateUser, changePassword } from "@/services/auth.service";
+import { updateUser, changePassword, deleteAccount } from "@/services/auth.service";
 import { ArrowLeft, User, Mail, Shield, Trash2, LogOut, Eye, EyeOff, KeyRound } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 
@@ -18,6 +18,12 @@ const AccountSettings = () => {
   const [showCurrentPassword, setShowCurrentPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+
+  // Delete account states
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [deletePassword, setDeletePassword] = useState("");
+  const [confirmChecked, setConfirmChecked] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   // Local form state - initialized from context user
   const [userInfo, setUserInfo] = useState({
@@ -180,11 +186,54 @@ const handleUpdateUserInfo = async (e: React.FormEvent) => {
   };
 
   const handleDeleteAccount = () => {
-    toast({
-      title: "Not Available",
-      description: "Account deletion is not yet implemented.",
-      variant: "destructive",
-    });
+    // Open confirmation modal
+    setDeletePassword("");
+    setConfirmChecked(false);
+    setShowDeleteModal(true);
+  };
+
+  const confirmDelete = async () => {
+    if (!user || !user.id) {
+      toast({ title: "Error", description: "User not found. Please log in again.", variant: "destructive" });
+      return;
+    }
+    if (!confirmChecked || !deletePassword) {
+      toast({ title: "Confirmation required", description: "Please check the box and enter your password.", variant: "destructive" });
+      return;
+    }
+
+        setIsDeleting(true);
+    try {
+      await deleteAccount(user.id, deletePassword);
+
+      toast({
+        title: "Account Deleted",
+        description: "Your account has been permanently deleted.",
+      });
+
+      // Clear auth and redirect
+      logout();
+      navigate("/");
+    } catch (err: unknown) {
+      let message = "Could not delete account.";
+
+      if (err instanceof Error) {
+        message = err.message;
+      } else if (typeof err === "object" && err !== null && "message" in err) {
+        message = String((err as { message?: unknown }).message);
+      }
+
+      toast({
+        title: "Delete Failed",
+        description: message,
+        variant: "destructive",
+      });
+    } finally {
+      setIsDeleting(false);
+      setShowDeleteModal(false);
+      setDeletePassword("");
+      setConfirmChecked(false);
+    }
   };
 
   const handleLogout = () => {
@@ -407,6 +456,48 @@ const handleUpdateUserInfo = async (e: React.FormEvent) => {
                   Logout
                 </Button>
               </div>
+
+              {/* Delete Confirmation Modal */}
+              {showDeleteModal && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center">
+                  <div className="absolute inset-0 bg-black/50" onClick={() => setShowDeleteModal(false)} />
+                  <div className="relative w-full max-w-md bg-card/95 backdrop-blur rounded-lg p-6 z-60 border border-border/50">
+                    <div className="flex items-start gap-3">
+                      <div className="p-2 rounded-full bg-destructive/20 text-destructive">
+                        <Trash2 className="w-5 h-5" />
+                      </div>
+                      <div>
+                        <h3 className="text-lg font-semibold text-foreground">Delete My Account</h3>
+                        <p className="text-sm text-muted-foreground mt-2">This action is permanent. All your data will be permanently removed and cannot be recovered.</p>
+                      </div>
+                    </div>
+
+                    <div className="mt-4">
+                      <label className="flex items-center gap-2">
+                        <input type="checkbox" checked={confirmChecked} onChange={(e) => setConfirmChecked(e.target.checked)} className="w-4 h-4" />
+                        <span className="text-sm text-foreground">I understand and want to delete my account</span>
+                      </label>
+
+                      <div className="mt-3">
+                        <label className="block text-sm font-medium text-foreground mb-2">Enter current password to confirm</label>
+                        <Input type="password" value={deletePassword} onChange={(e) => setDeletePassword(e.target.value)} placeholder="Current password" />
+                      </div>
+
+                      <div className="mt-4 flex justify-end gap-2">
+                        <Button variant="outline" onClick={() => setShowDeleteModal(false)}>Cancel</Button>
+                        <Button
+                          variant="outline"
+                          className="gap-2 bg-destructive text-white hover:bg-destructive/90"
+                          onClick={confirmDelete}
+                          disabled={!confirmChecked || !deletePassword || isDeleting}
+                        >
+                          {isDeleting ? "Deleting..." : "Delete My Account"}
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
             </CardContent>
           </Card>
         </div>

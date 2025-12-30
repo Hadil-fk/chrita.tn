@@ -275,4 +275,35 @@ router.post("/google", async (req, res) => {
   }
 });
 
+// -------- DELETE ACCOUNT --------
+router.delete("/delete-account/:userId", async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const { currentPassword } = req.body;
+
+    if (!userId) return res.status(400).json({ message: "User ID is required" });
+    if (!currentPassword) return res.status(400).json({ message: "Current password is required" });
+
+    const user = await User.findById(userId);
+    if (!user) return res.status(404).json({ message: "User not found" });
+
+    // If user has local password, verify it
+    if (user.password) {
+      const isMatch = await bcrypt.compare(currentPassword, user.password);
+      if (!isMatch) return res.status(400).json({ message: "Current password is incorrect" });
+    } else {
+      // Google-only account — just reject for safety (can modify if needed)
+      return res.status(400).json({ message: "Password verification not available for Google accounts" });
+    }
+
+    // Delete user from database
+    await User.findByIdAndDelete(userId);
+
+    return res.json({ message: "Account deleted successfully" });
+  } catch (error) {
+    console.error("Delete account error:", error);
+    res.status(500).json({ message: error.message || "Failed to delete account" });
+  }
+});
+
 module.exports = router;

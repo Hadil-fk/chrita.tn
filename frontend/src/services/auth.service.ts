@@ -150,3 +150,12 @@ export const loginWithGoogle = async (tokenId: string): Promise<AuthResponse> =>
     throw new Error(getErrorMessage(error, "Google authentication failed"));
   }
 };
+
+// DELETE ACCOUNT
+export const deleteAccount = async (userId: string, currentPassword: string): Promise<void> => {
+  try {
+    await api.delete(`/auth/delete-account/${userId}`, { data: { currentPassword } });
+  } catch (error) {
+    throw new Error(getErrorMessage(error, "Failed to delete account"));
+  }
+};
